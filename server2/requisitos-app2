@@ -1,0 +1,115 @@
+App2 - Requisitos (generado por claude)
+
+ Preparar el servidor
+
+## 1. El servidor
+
+- **Ubuntu 24.04 LTS** (también sirve 22.04).
+- 1 procesador, **1 GB de RAM** y 20 GB de disco como mínimo. Con 1 GB
+es obligatoria la memoria de intercambio del punto 3.
+- IP fija.
+- Un **dominio o subdominio** que apunte a la IP del servidor
+(registro A). Hace falta para el certificado HTTPS, así que tiene que
+estar funcionando cuando se haga la instalación.
+- Puertos abiertos: **SSH, 80 y 443**.
+
+## 2. Paquetes del sistema
+
+```bash
+apt update && apt upgrade -y
+apt install -y python3 python3-venv python3-pip postgresql nginx
+certbot python3-certbot-nginx git gnupg cron ufw
+```
+
+## 3. Memoria de intercambio (swap) de 2 GB
+
+Con 1 GB de RAM, cuando el sistema manda planillas o constancias por
+mail se queda sin memoria. Sin la swap, Linux corta procesos y se cae.
+
+Primero mirá si ya hay una con `swapon --show`. Si muestra una de 2 GB
+o más, salteá este punto. Si no muestra nada:
+
+```bash
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+sysctl vm.swappiness=10
+echo 'vm.swappiness=10' > /etc/sysctl.d/99-swappiness.conf
+```
+
+## 4. Zona horaria
+
+Los envíos automáticos y el backup se programan con la hora del servidor:
+
+```bash
+timedatectl set-timezone America/Argentina/Buenos_Aires
+```
+
+## 5. Firewall
+
+```bash
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw enable
+```
+
+## 6. Base de datos (PostgreSQL)
+
+Crear el usuario y la base con estos nombres, y una contraseña a elección:
+
+```bash
+sudo -u postgres psql -c "CREATE USER sage_et7_user WITH PASSWORD
+'ELEGIR_UNA_CLAVE';"
+sudo -u postgres psql -c "CREATE DATABASE sage_et7 OWNER sage_et7_user
+ENCODING 'UTF8';"
+```
+
+## 7. Dependencias de Python
+
+En un entorno virtual dentro de la carpeta donde va a ir el sistema:
+
+```bash
+mkdir -p /root/SAGE-ET7 /root/logs /root/backups/sage_et7
+python3 -m venv /root/SAGE-ET7/.venv
+/root/SAGE-ET7/.venv/bin/pip install --upgrade pip
+/root/SAGE-ET7/.venv/bin/pip install \
+  flask==3.0.3 flask-sqlalchemy==3.1.1 "flask-dance[sqla]==7.1.0"
+flask-login==0.6.3 \
+  flask-mail==0.10.0 flask-wtf==1.2.2 psycopg2-binary==2.9.12
+python-dotenv==1.0.1 \
+  reportlab==4.2.0 gunicorn==22.0.0 "openpyxl>=3.1.5" pandas pymupdf \
+  pyotp==2.9.0 segno==1.6.1 cryptography==44.0.2
+```
+
+Dejá en `/root/SAGE-ET7` solamente la carpeta `.venv`, sin otros
+archivos: ahí va el código después.
+
+## 8. Comprobar que quedó bien
+
+```bash
+lsb_release -d
+free -h
+python3 --version
+psql --version
+nginx -v
+systemctl is-active postgresql nginx
+/root/SAGE-ET7/.venv/bin/python -c "import flask, flask_sqlalchemy,
+flask_dance, flask_login, flask_mail, flask_wtf, psycopg2, dotenv,
+reportlab, gunicorn, openpyxl, pandas, pymupdf, pyotp, segno,
+cryptography; print('OK')"
+```
+
+En `free -h`, la fila `Swap` tiene que mostrar 2 GB o más (`2.0Gi`).
+Tiene que decir `active` para los dos servicios y `OK` al final.
+
+## 9. Cuando esté listo, pasame
+
+- La IP, el puerto y el usuario para entrar por SSH.
+- El dominio.
+- La contraseña de la base del punto 6.
+- Una cuenta de Gmail de la escuela para los envíos automáticos, con
+la verificación en dos pasos activada y una **contraseña de
+aplicación** (Cuenta de Google → Seguridad → Contraseñas de
+aplicaciones).
