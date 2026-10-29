@@ -70,7 +70,7 @@ El procedimiento de §6 corre `install.sh` sin `--no-seed`, así que cada actual
 
 - **Cachés dentro del repo.** El home de `cedears` es `/opt/cedears`, así que corepack, pnpm y pip dejan `.cache/` y `.local/` en la raíz del repo (salen como sin seguimiento en `git status`). No rompe nada; se puede agregar al `.gitignore` o usar otro home.
 - **`HEAD` responde 405.** `HEAD /` y `HEAD /healthz` dan 405. Algunos monitores externos usan `HEAD`; si se piensa monitorear, conviene aceptarlo al menos en `/healthz`.
-- **Permisos de las bases.** `app.sqlite` (usuarios y hashes de sesión) la crea la app con **644**: cualquier usuario del servidor la puede leer. Sugerencia: `UMask=0077` en la unidad (o crearla con permisos 600 desde el código). `NYSE_data.sqlite` y `cedears.sqlite` también quedan 644; no tienen datos sensibles.
+- **Permisos de las bases.** `app.sqlite` (usuarios y hashes de sesión) la crea la app con **644**: cualquier usuario del servidor la puede leer. En el servidor se corrigió con `chmod 600` y un drop-in `cedears.service.d/umask.conf` con `UMask=0077`. Sugerencia: llevar el `UMask=0077` a `deploy/cedears.service` (o crear la base con 600 desde el código). `NYSE_data.sqlite` y `cedears.sqlite` también quedan 644; no tienen datos sensibles.
 - **Landing estática.** La página «En construcción» de `/var/www/cedears.run.place` ya no se sirve; los archivos siguen en el servidor.
 
 ## 5. Configuración aplicada en el servidor
@@ -78,6 +78,7 @@ El procedimiento de §6 corre `install.sh` sin `--no-seed`, así que cada actual
 | Archivo | Contenido |
 |---|---|
 | `/etc/systemd/system/cedears.service` | copia sin cambios de `deploy/cedears.service` |
+| `/etc/systemd/system/cedears.service.d/umask.conf` | `UMask=0077` |
 | `/etc/systemd/system/cedears-backup.{service,timer}` | backup diario a las 20:00 (Buenos Aires) |
 | `/etc/nginx/conf.d/cedears-ratelimit.conf` | zonas `cedears_api` y `cedears_auth` |
 | `/etc/nginx/snippets/cedears-proxy.conf` | `proxy_pass` al socket + `Host`, `X-Forwarded-Proto`, `X-Forwarded-For` |

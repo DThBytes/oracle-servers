@@ -99,3 +99,9 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 - Verificado: corrida manual OK (4 bases, 600, `integrity_check` ok en todas), 65 MB de pico; próxima corrida 2026-10-29 23:00 UTC.
 - Queda en el mismo disco: no protege de la pérdida del VPS.
 - Revertir: `sudo systemctl disable --now cedears-backup.timer && sudo rm /etc/systemd/system/cedears-backup.{service,timer} && sudo systemctl daemon-reload` (los backups en `/var/backups/cedears` se borran a mano).
+
+### 14:20 — Deploy de cedears: permisos de app.sqlite
+- Por qué: la app creó `data/app.sqlite` (usuarios y hashes de sesión) con 644, legible por cualquier usuario del servidor.
+- Cómo: `chmod 600 /opt/cedears/data/app.sqlite`; drop-in `/etc/systemd/system/cedears.service.d/umask.conf` con `UMask=0077`; `daemon-reload` y `restart cedears`.
+- Verificado: servicio activo, `UMask=0077`, socket sigue 0666 dentro de `/run/cedears` 0750, `/healthz` 200 por el socket y por HTTPS.
+- Revertir: `sudo rm -r /etc/systemd/system/cedears.service.d && sudo systemctl daemon-reload && sudo systemctl restart cedears`.
