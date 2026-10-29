@@ -60,3 +60,9 @@ Huella del host: `ED25519 SHA256:iMniXADM1eNiBS7A87scJ3yRsWUiMyR8aB9BI3Wws6g`
 - ¿185.183.34.167 es tuya?
 - ¿Para qué se va a usar server1? (¿la "app2" del plan de server2, respaldo, otra cosa?) Define qué puertos abrir y qué endurecer.
 - ¿Querés alinear con server2 (zona horaria ART, X11 off, swappiness 10, límite del journal, Ubuntu Pro)?
+
+## Respuestas del usuario
+- 185.183.34.167: es del usuario (VPN del trabajo; desde ahí hizo la instalación limpia del 26-oct).
+- Uso: proyectos personales. Primero, landing estática en `cedears.run.place`; más adelante se despliega un proyecto.
+
+Los cambios aplicados a partir de esta auditoría están en [bitacora.md](bitacora.md).
