@@ -105,3 +105,7 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 - Cómo: `chmod 600 /opt/cedears/data/app.sqlite`; drop-in `/etc/systemd/system/cedears.service.d/umask.conf` con `UMask=0077`; `daemon-reload` y `restart cedears`.
 - Verificado: servicio activo, `UMask=0077`, socket sigue 0666 dentro de `/run/cedears` 0750, `/healthz` 200 por el socket y por HTTPS.
 - Revertir: `sudo rm -r /etc/systemd/system/cedears.service.d && sudo systemctl daemon-reload && sudo systemctl restart cedears`.
+
+### 14:21 — Deploy de cedears: login verificado
+- El usuario entró con su cuenta de Google (también logout y nuevo login). En el log: intercambio de token y claves de Google OK, `code`/`state` no registrados, sin errores. `app.sqlite` sigue 600. Memoria ~95 MB.
+- Deploy terminado.

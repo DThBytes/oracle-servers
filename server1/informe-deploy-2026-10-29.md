@@ -19,7 +19,7 @@ La app está en producción en `https://cedears.run.place`, con el servicio `ced
 | Rate limiting | 30 pedidos simultáneos a `/api/` → un 429 |
 | Memoria | ~160 MB al arrancar |
 
-Falta probar el login completo con la cuenta de `ALLOWED_EMAILS` (lo tiene que hacer el usuario desde el navegador).
+Login completo verificado por el usuario con su cuenta de Google (login, logout y nuevo login), sin errores en el log.
 
 ## 2. Respuestas a §9 de DEPLOY.md
 
