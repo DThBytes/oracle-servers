@@ -109,3 +109,24 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 ### 14:21 — Deploy de cedears: login verificado
 - El usuario entró con su cuenta de Google (también logout y nuevo login). En el log: intercambio de token y claves de Google OK, `code`/`state` no registrados, sin errores. `app.sqlite` sigue 600. Memoria ~95 MB.
 - Deploy terminado.
+
+### 17:04 — Acceso desde la PC del trabajo
+- El usuario copió la llave `server1-oracle-vps` a la PC del trabajo (`DESKTOP-6RPH9HO`, WSL): `~/.ssh/server1-oracle-vps` (600) y alias `server1` en `~/.ssh/config`. Huella del host verificada contra la de las 09:15.
+- Revertir: borrar la llave y el alias de esa PC; si se la da por comprometida, quitarla de `~ubuntu/.ssh/authorized_keys` en el servidor.
+
+### 17:04 — Script de actualización `cedears-update`
+- Por qué: el procedimiento de [DEPLOY.md](DEPLOY.md) §6 son varios pasos manuales y corre `install.sh` siempre, que vuelve a descargar datos (informe §3.4).
+- Cómo: `server1/cedears-update.sh` de este repo → `/usr/local/sbin/cedears-update` (root, 755). Uso: `ssh -t server1 sudo cedears-update`. Hace backup (`cedears-backup.service`), `git fetch`, muestra los cambios y pide confirmación, `git merge --ff-only`, corre `install.sh -y --skip-system --no-seed --build` solo si cambian `backend/requirements*.txt`, `frontend/` o `install.sh`, avisa si cambian `deploy/` o `.env.example` (no los aplica), reinicia y espera `/healthz` 30 s; si falla, muestra cómo volver al commit anterior.
+- Revertir: `sudo rm /usr/local/sbin/cedears-update`.
+
+### 17:04 — Deploy key de GitHub para `cedears`
+- Por qué: que `git fetch` no pida usuario y token (informe §3.2).
+- Cómo: `ssh-keygen -t ed25519` como `cedears` → `/opt/cedears/.ssh/id_ed25519` (700/600; queda sin seguimiento en el repo). `known_hosts` con la llave ED25519 de github.com (`SHA256:+DiY3wvvV6TuJJhbpZisF/zLDA0zPMSvHdkr4UvCOqU`, la publicada por GitHub). El usuario agregó la pública en `DThBytes/nyse-charts` → Deploy keys, **sin** escritura. Remoto cambiado a `git@github.com:DThBytes/nyse-charts.git`.
+- Verificado: `git ls-remote` OK; `git push --dry-run` rechazado.
+- Revertir: borrar la deploy key en GitHub, `sudo rm -r /opt/cedears/.ssh` y `sudo -u cedears git -C /opt/cedears remote set-url origin https://github.com/DThBytes/nyse-charts.git`.
+
+### 17:10 — Actualización de cedears: `6291dbf` → `e0ee506`
+- Cambio: al abrir un gráfico vuelve a leer de Yahoo si la última lectura tiene más de un minuto. Solo código del backend: no hizo falta `install.sh`.
+- Cómo: `sudo cedears-update` (backup `/var/backups/cedears/20261029T201055Z` antes de aplicar).
+- Verificado: servicio activo, `/healthz` 200 por el socket y por HTTPS, sin errores en el log, ~95 MB. Segunda corrida: «Ya está al día».
+- Revertir: `cd /opt/cedears && sudo -u cedears git reset --hard 6291dbf && sudo systemctl restart cedears`.

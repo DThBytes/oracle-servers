@@ -52,6 +52,8 @@ Login completo verificado por el usuario con su cuenta de Google (login, logout 
 
 **Pedido.** Mencionar en DEPLOY.md que el repo es privado y cómo se autentica el clon y las actualizaciones.
 
+**Actualización (17:04).** Se configuró una deploy key de solo lectura para el usuario `cedears` (`/opt/cedears/.ssh`) y el remoto pasó a SSH: las actualizaciones ya no piden credenciales.
+
 ### 3.3 `install.sh` genera un `cedears_quotes.sqlite` incompleto
 
 **Qué pasó.** `install.sh` (§3.2) creó `data/cedears_quotes.sqlite` con las últimas 40 ruedas: 373 símbolos, 72 sin historia y varios cortes de conexión con data912 (`Connection reset by peer`, `SSLEOFError`). Después se reemplazó por el archivo del desarrollador (402 símbolos, mismo SHA-256 que el original). El generado quedó como `cedears_quotes.sqlite.install-2026-10-29`, por si hace falta compararlo.
@@ -65,6 +67,8 @@ Login completo verificado por el usuario con su cuenta de Google (login, logout 
 El procedimiento de §6 corre `install.sh` sin `--no-seed`, así que cada actualización vuelve a pedir a data912 y Yahoo los CEDEARs sin historia completa (hoy, al menos los 72 que nunca tienen datos). Eso pasa con el servicio corriendo y comparte el cupo de Yahoo con la app.
 
 **Pedido.** Confirmar si en las actualizaciones conviene `--no-seed` y, si es así, ponerlo en §6.
+
+**En el servidor.** Las actualizaciones se hacen con `cedears-update` (ver [bitacora.md](bitacora.md)), que corre `install.sh` solo si cambian dependencias o el frontend, y siempre con `--no-seed`.
 
 ## 4. Observaciones menores
 
