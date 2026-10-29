@@ -28,7 +28,7 @@ Falta probar el login completo con la cuenta de `ALLOWED_EMAILS` (lo tiene que h
 3. **Rate limiting** (zonas con nombre propio, en `conf.d/cedears-ratelimit.conf`):
    - `/api/`: 10 r/s por IP, `burst=20 nodelay`, respuesta 429.
    - `/auth/`: 5 r/min por IP, `burst=5 nodelay`, respuesta 429.
-4. **Backup**: todavía sin definir; se configura aparte.
+4. **Backup**: timer de systemd todos los días a las 20:00 de Buenos Aires (después de la lectura de las 19:00), con `app.cli backup` a `/var/backups/cedears`, archivos 600 y 14 días de retención. Queda en el mismo disco.
 
 ## 3. Incidentes
 
@@ -70,7 +70,7 @@ El procedimiento de §6 corre `install.sh` sin `--no-seed`, así que cada actual
 
 - **Cachés dentro del repo.** El home de `cedears` es `/opt/cedears`, así que corepack, pnpm y pip dejan `.cache/` y `.local/` en la raíz del repo (salen como sin seguimiento en `git status`). No rompe nada; se puede agregar al `.gitignore` o usar otro home.
 - **`HEAD` responde 405.** `HEAD /` y `HEAD /healthz` dan 405. Algunos monitores externos usan `HEAD`; si se piensa monitorear, conviene aceptarlo al menos en `/healthz`.
-- **Permisos de las bases.** `NYSE_data.sqlite` y `cedears.sqlite` quedan 644. No tienen datos sensibles, pero si se quiere uniformidad con `cedears_quotes.sqlite` (600), `install.sh` podría crearlas con `umask 077`. Conviene confirmar que `app.sqlite` (sesiones) se crea 600: todavía no existe porque nadie se logueó.
+- **Permisos de las bases.** `app.sqlite` (usuarios y hashes de sesión) la crea la app con **644**: cualquier usuario del servidor la puede leer. Sugerencia: `UMask=0077` en la unidad (o crearla con permisos 600 desde el código). `NYSE_data.sqlite` y `cedears.sqlite` también quedan 644; no tienen datos sensibles.
 - **Landing estática.** La página «En construcción» de `/var/www/cedears.run.place` ya no se sirve; los archivos siguen en el servidor.
 
 ## 5. Configuración aplicada en el servidor
@@ -78,6 +78,7 @@ El procedimiento de §6 corre `install.sh` sin `--no-seed`, así que cada actual
 | Archivo | Contenido |
 |---|---|
 | `/etc/systemd/system/cedears.service` | copia sin cambios de `deploy/cedears.service` |
+| `/etc/systemd/system/cedears-backup.{service,timer}` | backup diario a las 20:00 (Buenos Aires) |
 | `/etc/nginx/conf.d/cedears-ratelimit.conf` | zonas `cedears_api` y `cedears_auth` |
 | `/etc/nginx/snippets/cedears-proxy.conf` | `proxy_pass` al socket + `Host`, `X-Forwarded-Proto`, `X-Forwarded-For` |
 | `/etc/nginx/sites-available/cedears.run.place` | `location /`, `/api/` (con `proxy_read_timeout 300s`), `/auth/` y `/assets/` (`expires 1y`); `client_max_body_size 1m` |

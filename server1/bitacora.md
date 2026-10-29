@@ -92,3 +92,10 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 - Site: se reemplazó la landing estática (`root`/`try_files`) por `location /` → app; `/api/` con `burst=20 nodelay`, 429 y `proxy_read_timeout 300s`; `/auth/` con `burst=5 nodelay` y 429; `/assets/` con `expires 1y`; `client_max_body_size 1m`. Los bloques de certbot y el include de security-headers no se tocaron. `/var/www/cedears.run.place` queda sin uso.
 - Verificado: `nginx -t` OK; HTTPS `/healthz` 200, `/` 303 → `/login`, `/api/me` 401, `/auth/login` 302 a Google (PKCE, nonce); headers de seguridad en todas las respuestas; 30 pedidos simultáneos a `/api/` → un 429; la app registra la IP real del cliente.
 - Revertir: restaurar el backup del site, borrar los dos archivos nuevos y `sudo systemctl reload nginx`.
+
+### 14:17 — Deploy de cedears: backup diario
+- Por qué: [DEPLOY.md](DEPLOY.md) §6. A las 20:00 de Buenos Aires (23:00 UTC), después de la lectura automática de las 19:00.
+- Cómo: `/var/backups/cedears` (`cedears`, 700); `/etc/systemd/system/cedears-backup.service` (oneshot como `cedears`, `UMask=0077`, `python -m app.cli backup /var/backups/cedears`, después borra las carpetas de más de 14 días; `ProtectSystem=strict`, solo escribe en `/var/backups/cedears`) y `cedears-backup.timer` (`OnCalendar=*-*-* 20:00:00 America/Argentina/Buenos_Aires`, `Persistent=true`). `enable --now` del timer.
+- Verificado: corrida manual OK (4 bases, 600, `integrity_check` ok en todas), 65 MB de pico; próxima corrida 2026-10-29 23:00 UTC.
+- Queda en el mismo disco: no protege de la pérdida del VPS.
+- Revertir: `sudo systemctl disable --now cedears-backup.timer && sudo rm /etc/systemd/system/cedears-backup.{service,timer} && sudo systemctl daemon-reload` (los backups en `/var/backups/cedears` se borran a mano).
