@@ -130,3 +130,16 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 - Cómo: `sudo cedears-update` (backup `/var/backups/cedears/20261029T201055Z` antes de aplicar).
 - Verificado: servicio activo, `/healthz` 200 por el socket y por HTTPS, sin errores en el log, ~95 MB. Segunda corrida: «Ya está al día».
 - Revertir: `cd /opt/cedears && sudo -u cedears git reset --hard 6291dbf && sudo systemctl restart cedears`.
+
+## 2026-10-30 (viernes)
+
+### 20:41 — Segundo dominio: cedears.personalsuiza.online
+- Por qué: pedido del usuario; convive con `cedears.run.place`, que sigue igual. DNS ya apuntaba al VPS (A → 129.159.43.196, sin CAA ni AAAA).
+- nginx: backup `/etc/nginx/sites-available/cedears.run.place.bak-2026-10-30-personalsuiza`; dominio agregado a `server_name` en los bloques 443 y 80. Mismo bloque, así que comparte zonas de rate limiting, body, timeouts y headers.
+- TLS: `certbot --nginx --cert-name cedears.run.place --expand --redirect -d cedears.run.place -d www.cedears.run.place -d cedears.personalsuiza.online`, después de un `--dry-run` OK. Vence 2027-01-28.
+- App: quitada `NYSE_PUBLIC_URL` de `/opt/cedears/.env` (sigue 600, `cedears`); `restart cedears`. La redirect URI ahora sale de `Host` y `X-Forwarded-Proto` (`snippets/cedears-proxy.conf`, sin cambios).
+- Verificado: `/healthz` 200 en los tres nombres; HTTP → 301; `/auth/login` manda la redirect URI del dominio pedido; headers de seguridad; POST de 2 MB → 413; `/auth/` con 12 pedidos seguidos → 429.
+- Pendiente: la redirect URI `https://cedears.personalsuiza.online/auth/callback` tiene que estar en el cliente OAuth de Google. Login por este dominio sin probar.
+- Efecto en `www.cedears.run.place`: antes la variable fijaba la redirect URI en `cedears.run.place`; ahora usa `www.`, que da error en Google si no está registrada.
+- Sin `default_server`: un `Host` desconocido llega a la app y arma la redirect URI con ese valor (`evil.example` probado); Google la rechaza si no está registrada. Sin cambios.
+- Revertir: restaurar el backup del site, volver a agregar `NYSE_PUBLIC_URL=https://cedears.run.place` al `.env`, `sudo systemctl reload nginx && sudo systemctl restart cedears`. El certificado con los tres nombres puede quedar.
