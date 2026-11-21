@@ -143,3 +143,17 @@ Horas en America/Argentina/Buenos_Aires (el servidor está en UTC). Uso: proyect
 - Efecto en `www.cedears.run.place`: antes la variable fijaba la redirect URI en `cedears.run.place`; ahora usa `www.`, que da error en Google si no está registrada.
 - Sin `default_server`: un `Host` desconocido llega a la app y arma la redirect URI con ese valor (`evil.example` probado); Google la rechaza si no está registrada. Sin cambios.
 - Revertir: restaurar el backup del site, volver a agregar `NYSE_PUBLIC_URL=https://cedears.run.place` al `.env`, `sudo systemctl reload nginx && sudo systemctl restart cedears`. El certificado con los tres nombres puede quedar.
+
+## 2026-11-21 (sábado)
+
+### 20:30 — Revisión de estado (sin cambios)
+- Recursos holgados (carga ~0.1, 444 MB disponibles, disco 13 %), 4 sitios OK, certificados válidos (68–89 días).
+- Sin registrar en esta bitácora (los hizo el usuario): e-mobiliario/puestos.run.place (17/11), dth.ar y clima.dth.ar detrás de Cloudflare (20/11), `cedears-gzip.conf` (5/11).
+- Pendientes detectados: `clima-smn` falla (SMN responde 403 a todo; `clima-smn.timer` disabled); zona `clima_api` usa `$http_cf_connecting_ip` y el origen acepta conexiones directas, así que el rate limit se puede eludir.
+
+### 20:38 — Actualización de paquetes y reinicio
+- Por qué: `reboot-required` desde el 11/11 (kernel 1013 corriendo, 1016 instalado) y 13 paquetes pendientes (nginx con parche de seguridad).
+- Cómo: `apt-get dist-upgrade` (`--force-confold`): base-files, distro-info, python3-distro-info, xxd, bpftool, fwupd, libfwupd3, linux-perf, linux-tools-common, nginx 1.28.3-2ubuntu1.14, nginx-common, snapd 2.78, ubuntu-drivers-common. `nginx -t` OK. Luego `systemctl reboot`.
+- Verificado: kernel `7.0.0-1016-oracle`, sin `reboot-required`, sistema `running` sin unidades fallidas; cedears, clima, e-mobiliario-web y nginx activos; timers de backup, worker y certbot programados; los 4 sitios responden.
+- Nota: cedears tarda ~60 s en abrir su socket después de arrancar (precalcula el leaderboard); en ese lapso nginx devuelve 502.
+- Revertir: no aplica (se puede elegir el kernel 1013 desde GRUB si hiciera falta).
